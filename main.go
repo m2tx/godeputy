@@ -146,13 +146,13 @@ func writeMapPNG() {
 		Values: data,
 	}
 
-	f, err := os.Create("./tmp/political_party_total.svg")
+	f, err := os.Create("./tmp/political_party_total.png")
 	if err != nil {
 		return
 	}
 	defer f.Close()
 
-	err = ch.Render(chart.SVG, f)
+	err = ch.Render(chart.PNG, f)
 	if err != nil {
 		return
 	}
