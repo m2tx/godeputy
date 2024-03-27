@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -23,8 +24,8 @@ import (
 const (
 	bitSize int = 64
 
-	legislatury int = 56
-	year        int = 2023
+	legislatury int = 57
+	year        int = 2024
 )
 
 var (
@@ -125,19 +126,54 @@ func writePoliticalPartyMap() {
 }
 
 func writeMapPNG() {
-	var data []chart.Value
+	var list []struct {
+		Key   string
+		Value float64
+	}
 
 	for k, v := range politicalPartyTotalMap {
-		data = append(data, chart.Value{
-			Label: fmt.Sprintf("%s (%.02fm)", k, v/1000000),
-			Value: v / 1000000,
-			Style: chart.Style{
-				FontColor: chart.ColorAlternateLightGray,
-				Font:      chart.StyleShow().Font,
-				Show:      true,
-				FontSize:  8,
-			},
+		list = append(list, struct {
+			Key   string
+			Value float64
+		}{
+			Key:   k,
+			Value: v,
 		})
+	}
+
+	sort.SliceStable(list, func(i, j int) bool {
+		return list[i].Value > list[j].Value
+	})
+
+	var data []chart.Value
+
+	var total float64
+	for i, v := range list {
+		total += v.Value
+		if i < 9 {
+			data = append(data, chart.Value{
+				Label: fmt.Sprintf("%d %s(%.02fm)", i+1, v.Key, total/1000000),
+				Value: total / 1000000,
+				Style: chart.Style{
+					FontColor: chart.ColorBlack,
+					Font:      chart.StyleShow().Font,
+					Show:      true,
+					FontSize:  10,
+				},
+			})
+			total = 0
+		} else if len(list)-1 == i {
+			data = append(data, chart.Value{
+				Label: fmt.Sprintf("10 Outros(%.02fm)", total/1000000),
+				Value: total / 1000000,
+				Style: chart.Style{
+					FontColor: chart.ColorBlack,
+					Font:      chart.StyleShow().Font,
+					Show:      true,
+					FontSize:  10,
+				},
+			})
+		}
 	}
 
 	ch := chart.PieChart{
